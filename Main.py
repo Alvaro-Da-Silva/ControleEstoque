@@ -1,8 +1,11 @@
 from flask import Flask,make_response,jsonify,request
 import mysql.connector
+from flask_cors import CORS
 
 app = Flask(__name__)
-app.config['JSON_SORT_KEYS'] = False  
+CORS(app)
+app.config['JSON_SORT_KEYS'] = False 
+
 
 DB = mysql.connector.connect(
     host='localhost',
@@ -60,8 +63,18 @@ def BuscaProdutos():
 @app.route('/users', methods=['POST'])
 def CadastroUsers():
     data = request.json
-
     CRS = DB.cursor()
+
+    CRS.execute('SELECT * FROM usuarios WHERE login = %s',(data['login'],))
+    RPT = CRS.fetchone()
+    if RPT:
+        return make_response(
+            jsonify(
+                mensagem = 'Esse login já existe'
+            )
+        )
+
+
     cmd = 'INSERT INTO usuarios (nome, login, senha) VALUES (%s, %s, %s)'
     values = (data['nome'],data['login'],data['senha'])
     CRS.execute(cmd,values)
@@ -150,5 +163,27 @@ def DeletarProduto(id):
             mensagem = 'Produto deletado com sucesso'
         )
     )
+
+@app.route('/login', methods=['POST'])
+def Login():
+    data = request.json
+    CRS = DB.cursor()
+
+    CRS.execute('SELECT id,nome FROM usuarios WHERE login = %s AND senha = %s',(data['login'], data['senha']))
+    user = CRS.fetchone()
+
+    if user:
+        return make_response(
+            jsonify(
+                mensagem = 'Login realizado com sucesso'
+            )
+        )
+
+    else:
+        return make_response(
+            jsonify(
+                mensagem = 'Senha ou login incorretos'
+            )
+        )
 
 app.run()
