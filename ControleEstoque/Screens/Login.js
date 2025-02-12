@@ -1,8 +1,30 @@
     import { View,Text,TextInput,TouchableOpacity } from "react-native-web";
-    import { StyleSheet,Alert } from "react-native";
+    import { StyleSheet } from "react-native";
     import { LinearGradient } from "expo-linear-gradient";
+    import { useState } from "react";
+    import axios from "axios";
+    
+
 
     export default function Login({navigation}){
+        const [login,SetLogin] = useState('')
+        const [senha,SetSenha] = useState('')
+
+        const Login = async () => {
+            try{
+                axios.post('http://127.0.0.1:5000/login', {login,senha},
+                  {headers: {"Content-Type": "application/json"}}
+                 )
+                SetSenha('')
+                SetLogin('')
+                navigation.navigate('Home')
+            } catch(error) {
+                alert('Dados de login invalido')
+                SetSenha('')
+                SetLogin('')
+            }
+        }
+
         return(
             <LinearGradient colors={['#F2F2F2','#F24F13']} style={styles.conteinerGradient}>
                 <View style={styles.boxLogin}>
@@ -16,14 +38,19 @@
                         <TextInput 
                         style={styles.Inputs}
                         placeholder="Login"
-                        keyboardType="email-address"
+                        placeholderTextColor={'#D9D9D9'}
+                        value={login}
+                        onChangeText={SetLogin}
                         />
                         <TextInput 
                         style={styles.Inputs}
                         placeholder="Senha"
+                        placeholderTextColor={'#D9D9D9'}
+                        value={senha}
+                        onChangeText={SetSenha}
                         secureTextEntry
                         />
-                        <TouchableOpacity style={styles.BtnAcess} onPress={() => navigation.navigate("Home")}>
+                        <TouchableOpacity style={styles.BtnAcess} onPress={Login}>
                             <Text style={styles.TxtAcess}>
                                 Acessar
                             </Text>
@@ -46,12 +73,11 @@
         boxLogin: {
             backgroundColor: '#fff',
             width: '35%',
-            height: '73%',
+            height: '70%',
         },
         HeaderBox: {
             padding: 10,
             paddingTop: 1
-        
         },
         TxtHeader: {
             fontSize: 70,
@@ -61,9 +87,11 @@
         TxtBox: {
             paddingTop: 7,
             paddingLeft: '5%',
+            fontWeight: 'bold',
         },
         TxtLogin: {
-            color: '#858585'
+            color: '#858585',
+            fontWeight: 'bold'
         },
         BoxInputs: {
             alignItems: 'center',
@@ -71,8 +99,8 @@
             justifyContent: 'flex-start'
         },
         Inputs: {
-            fontSize: 50,
-            color:'#D9D9D9',
+            fontSize: 40,
+            color:'#333',
             height: '25%',
             width: '85%',
             borderWidth: 1,
@@ -91,7 +119,7 @@
         },
         TxtAcess: {
             color: '#fff',
-            fontSize: 56,
+            fontSize: 45,
         },
         FooterBox: {
             justifyContent: 'center',
@@ -100,7 +128,8 @@
         },
         FooterTxt: {
             color:'#858585',
-            fontSize: 18
+            fontSize: 18,
+            
         }
 
     })

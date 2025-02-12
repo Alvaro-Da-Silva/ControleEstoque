@@ -1,6 +1,7 @@
-import { View,Text,TextInput,TouchableOpacity,Image,Modal } from "react-native-web";
+import { View,Text,TextInput,TouchableOpacity,Image,Modal, FlatList } from "react-native-web";
 import { StyleSheet,TouchableWithoutFeedback } from "react-native";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import axios from 'axios';
 import Fontisto from '@expo/vector-icons/Fontisto';
 import AntDesign from '@expo/vector-icons/AntDesign';
 import Feather from '@expo/vector-icons/Feather';
@@ -11,7 +12,89 @@ export default function Home(){
 
     const [modalVisebleCAD, SetmodalVisebleCAD] = useState(false)
     const [modalViseblePUT, SetmodalViseblePUT] = useState(false)
-    const [modalVisebleDEL, SetmodalVisebleDEL] = useState(false)
+    const [data,SetData] = useState([])
+    const [id,SetId] = useState(null)
+    const [nome,SetNome] = useState('')
+    const [quantidade,SetQuantidade] = useState('')
+    const [preco,SetPreco] = useState('')
+    const [descricao,SetDescricao] = useState('')
+    const [searchTerm, SetSearchTerm] = useState('')
+
+    const filteredData = data.filter(item => item.nome.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    const ModalPut = (produto) => {
+        SetmodalViseblePUT(true);
+        SetId(produto.id);
+        SetNome(produto.nome);
+        SetQuantidade(produto.Quantidade.toString());
+        SetPreco(produto.Preço.toString());
+        
+    };
+
+    const CarregarProdutos = async () => {
+        try{
+            const Rensponse = await axios.get('http://127.0.0.1:5000/produtos');
+            SetData(Rensponse.data.Produtos)
+        } catch(error) {
+            console.error('Erro ao buscar produtos')
+        }  
+    }
+
+    const Cadastro = async () => {
+        try{
+            await axios.post('http://127.0.0.1:5000/produtos', {nome,quantidade,preco,descricao})
+            alert('Produto cadastrado')
+            SetNome('')
+            SetQuantidade('')
+            SetPreco('')
+            SetmodalVisebleCAD(false)
+            await CarregarProdutos();
+        } catch(error) {
+            alert('Erro ao cadastar produto')
+        }
+    } 
+    
+    const Delete = async (produto) => {
+        try{
+            await axios.delete(`http://127.0.0.1:5000/produtos/${produto.id}`)
+            alert('Produto deletado')
+            await CarregarProdutos();
+            
+        } catch(error) {
+            alert('Erro ao deletar produto')
+        }
+    }
+
+    const DeleteNotificação =  (item) => {
+        const ConfirmDelete = window.confirm(`Deseja mesmo deletar ${item.nome} ?`) 
+
+        if(ConfirmDelete){
+            Delete(item)
+        }
+    }
+
+    const Alterar = async () => {
+        try{
+            await axios.put(`http://127.0.0.1:5000/produtos/${id}`,{nome,quantidade,preco,descricao})
+            alert('Produto alterado com sucesso')
+            SetmodalViseblePUT(false)
+            SetNome('')
+            SetQuantidade('')
+            SetPreco('')
+            await CarregarProdutos();
+
+        } catch(error){
+            alert('Erro ao alterar produto')
+            SetmodalViseblePUT(false)
+            SetNome('')
+            SetQuantidade('')
+            SetPreco('')
+        }
+    }
+
+    useEffect(() => {
+        CarregarProdutos();
+    }, []);
 
     return(
         <View style={styles.conteiner}>
@@ -21,12 +104,14 @@ export default function Home(){
                       style={styles.Search}
                       placeholder="Pesquisar"
                       placeholderTextColor={'#D9D9D9'}
+                      value={searchTerm}
+                      onChangeText={SetSearchTerm}
                     />
                     <TouchableOpacity style={styles.BtnSearch}>
                         <Fontisto name="search" size={40} color="black" />
                     </TouchableOpacity>
                 </View>
-                <View style={styles.Logo}>
+                <View>
                     <Image
                         source={logo}
                         style = {{height: 300, width: 300}}
@@ -36,7 +121,7 @@ export default function Home(){
             <View style={styles.Infos}>
 
                 <View style={styles.lenBox}>
-                   <Text style={styles.lenProdutos}> Total de produtos: 4 </Text>
+                   <Text style={styles.lenProdutos}> Total de produtos: {data.length} </Text>
                 </View>
                 
                 <TouchableOpacity style={styles.BtnAdc} onPress={() => SetmodalVisebleCAD(true)}>
@@ -47,29 +132,73 @@ export default function Home(){
             </View>
             <View style={styles.body}>
                 <View style={styles.Names}>
-                    <Text style={styles.TxtNames}> ID </Text>
-                    <Text style={styles.TxtNames}> Nome Produto </Text>
-                    <Text style={styles.TxtNames}> Quantidade </Text>
-                    <Text style={styles.TxtNames}> Preço </Text>
-                    <Text style={styles.TxtNames}> Ações </Text>
+
+                    <View style={styles.InfosSize}>
+                        <Text style={styles.TxtNames}> ID </Text>
+                    </View>
+
+                    <View style={styles.InfosSize}>
+                        <Text style={styles.TxtNames}> Nome Produto </Text>
+                    </View>
+
+                    <View style={styles.InfosSize}>
+                        <Text style={styles.TxtNames}> Quantidade </Text>      
+                    </View >
+
+                    <View style={styles.InfosSize}>
+                        <Text style={styles.TxtNames}> Preço </Text>
+                    </View>
+
+                    <View style={styles.InfosSize}>
+                        <Text style={styles.TxtNames}> Ações </Text>        
+                    </View>
+
                 </View>
 
-                <View style={styles.itens}>
-                    <Text style={styles.TxtItens}> 1 </Text>
-                    <Text style={styles.TxtItens}> Betonera </Text>
-                    <Text style={styles.TxtItens}> 20 </Text>
-                    <Text style={styles.TxtItens}> 2000R$ </Text>
-                    <View style={styles.Icons}>
-                        <TouchableOpacity onPress={() => SetmodalViseblePUT(true)}>
-                            <Feather name="edit" size={38} color="black" />
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => SetmodalVisebleDEL(true)}>
-                            <Feather name="trash-2" size={38} color="black" />
-                        </TouchableOpacity>
+                <View style={styles.flatlistbox}>
+                <FlatList
+                style={styles.flatlist}
+                data={filteredData}
+                keyExtractor={(item) => String(item.id)}
+                renderItem={({item}) =>
+
+                    <View style={styles.itens}>
+
+                        <View style={styles.InfosSize}>
+                            <Text style={styles.TxtItens}> {item.id} </Text>
+                        </View>
+
+                        <View style={styles.InfosSize}>
+                            <Text style={styles.TxtItens}> {item.nome} </Text>
+                        </View>
+
+                        <View style={styles.InfosSize}>
+                            <Text style={styles.TxtItens}> {item.Quantidade} </Text>
+                        </View>
+
+                        <View style={styles.InfosSize}>
+                            <Text style={styles.TxtItens}> {item.Preço} R$ </Text>
+                        </View>
+
                         
 
+
+
+                        <View style={styles.Icons}>
+                            <TouchableOpacity onPress={() => ModalPut(item)}>
+                                <Feather name="edit" size={38} color="black" />
+                            </TouchableOpacity>
+                            <TouchableOpacity onPress={() => DeleteNotificação(item)}>
+                                <Feather name="trash-2" size={38} color="black" />
+                            </TouchableOpacity>
+                        </View>
                     </View>
-                </View>
+
+                 }
+                /> 
+
+
+             </View>
             </View>
 
             <Modal
@@ -85,19 +214,25 @@ export default function Home(){
                         <Text style={styles.TxtModalHeader}>Cadastrar Produto</Text>
 
                         <View style={styles.ModalInputBox}>
-                            <TextInput style={styles.ModalInput} placeholder="Nome do produto" />
-                            <TextInput style={styles.ModalInput} placeholder="Quantidade" />
-                            <TextInput style={styles.ModalInput} placeholder="Preço" />
+                            <TextInput style={styles.ModalInput} value={nome} onChangeText={SetNome} placeholder="Nome do produto" />
+                            <TextInput style={styles.ModalInput} value={quantidade} onChangeText={SetQuantidade} placeholder="Quantidade" />
+                            <TextInput style={styles.ModalInput} value={preco} onChangeText={SetPreco} placeholder="Preço" />
 
                             <View style={styles.ModalBtnsBox}>
                             <TouchableOpacity
                                 style={styles.ModalBtnsX}
-                                onPress={() => SetmodalVisebleCAD(false)}
+                                onPress={() => {
+                                    SetmodalVisebleCAD(false);
+                                    SetNome('');
+                                    SetQuantidade('');
+                                    SetPreco('');
+                                }}
+                                
                             >
                                 <Feather name="x" size={35} color="white" />
                             </TouchableOpacity>
 
-                            <TouchableOpacity style={styles.ModalBtnsV}>
+                            <TouchableOpacity style={styles.ModalBtnsV} onPress={Cadastro}>
                                 <Entypo name="check" size={35} color="white" />
                             </TouchableOpacity>
                             </View>
@@ -121,19 +256,24 @@ export default function Home(){
                         <Text style={styles.TxtModalHeader}>Editar Produto</Text>
 
                         <View style={styles.ModalInputBox}>
-                            <TextInput style={styles.ModalInput} placeholder="Nome do produto" />
-                            <TextInput style={styles.ModalInput} placeholder="Quantidade" />
-                            <TextInput style={styles.ModalInput} placeholder="Preço" />
+                            <TextInput style={styles.ModalInput} value={nome} onChangeText={SetNome} placeholder="Nome do produto" />
+                            <TextInput style={styles.ModalInput} value={quantidade} onChangeText={SetQuantidade} placeholder="Quantidade" />
+                            <TextInput style={styles.ModalInput} value={preco} onChangeText={SetPreco} placeholder="Preço" />
 
                             <View style={styles.ModalBtnsBox}>
                             <TouchableOpacity
                                 style={styles.ModalBtnsX}
-                                onPress={() => SetmodalViseblePUT(false)}
+                                onPress={() =>{ 
+                                    SetmodalViseblePUT(false);
+                                    SetNome('');
+                                    SetQuantidade('');
+                                    SetPreco('');
+                                }}
                             >
                                 <Feather name="x" size={35} color="white" />
                             </TouchableOpacity>
 
-                            <TouchableOpacity style={styles.ModalBtnsV}>
+                            <TouchableOpacity style={styles.ModalBtnsV} onPress={Alterar}>
                                 <Entypo name="check" size={35} color="white" />
                             </TouchableOpacity>
                             </View>
@@ -144,44 +284,7 @@ export default function Home(){
                 </TouchableWithoutFeedback>
                 </Modal>
 
-                <Modal
-                    animationType="slide"
-                    transparent={true}
-                    visible={modalVisebleDEL}
-                    onRequestClose={() => SetmodalVisebleDEL(false)}
-                >
-                <TouchableWithoutFeedback onPress={() => SetmodalVisebleDEL(false)}>
-                    <View style={styles.ModalConteiner}>
-                    <TouchableWithoutFeedback onPress={() => null} accessible={false}>
-                        <View style={styles.ModalBodyDel}>
-
-                        <View style={styles.ModalMessageBox}>
-                            <View style={styles.ModalTxtBox}>
-                                <Text style={styles.ModalMessage}>Deseja mesmo deletar </Text>
-                                <Text style={styles.ModalMessage}> esse produto?</Text>
-                                <Text style={styles.ModalMessage}>produto?</Text>
-                            </View>
-
-
-                            <View style={styles.ModalBtnsBox}>
-                            <TouchableOpacity
-                                style={styles.ModalBtnsXDel}
-                                onPress={() => SetmodalVisebleDEL(false)}
-                            >
-                                <Text style={styles.ModalBtnsTxtDel}>NÃO</Text>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity style={styles.ModalBtnsVDel}>
-                                <Text style={styles.ModalBtnsTxtDel}>SIM</Text>
-                            </TouchableOpacity>
-                            </View>
-                        </View>
-                        </View>
-                    </TouchableWithoutFeedback>
-                    </View>
-                </TouchableWithoutFeedback>
-                </Modal>
-
+               
 
 
             
@@ -192,7 +295,7 @@ export default function Home(){
 const styles = StyleSheet.create({
     conteiner: {
         flex: 1,
-        backgroundColor: '#F2F2F2'
+        backgroundColor: '#F9F9F9'
     },
     Header: {
         width: '100%',
@@ -200,181 +303,143 @@ const styles = StyleSheet.create({
         backgroundColor: '#F26430',
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'center'
+        alignItems: 'center',
+        paddingHorizontal: '2%'
     },
     BoxSearch: {
         flexDirection: 'row',
-        backgroundColor:'#fff',
-        width: '43%',
+        backgroundColor: '#FFF',
+        width: '45%',
         height: '50%',
-        marginLeft: '3%'
+        alignItems: 'center',
     },
     Search: {
-        width: '90%',
+        flex: 1,
+        outline: 'none',
+        fontSize: 25,
+        color: '#333',
+        width: '100%',
         height: '100%',
-        fontSize: 30,
-        color:'#000',
         paddingLeft: '2%'
     },
     BtnSearch: {
         backgroundColor: '#FF9068',
-        justifyContent: 'center',
-        alignItems: 'center',
+        width: '10%',
         height: '100%',
-        width: '10%'
+        justifyContent: 'center',
+        alignItems: 'center'
     },
     Infos: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        margin: '2%'
-    },
-    lenBox: {
-        justifyContent: 'center',
         alignItems: 'center',
-        flexDirection: 'row',
-        height: '160%',
-        width: '20%'
+        paddingHorizontal: '5%',
+        marginTop: '2%'
     },
     lenProdutos: {
-        fontSize: 30
+        fontSize: 23,
+        color: '#333'
     },
     BtnAdc: {
         backgroundColor: '#F24F13',
-        justifyContent: 'center',
-        alignItems: 'center',
         flexDirection: 'row',
-        height: '160%',
-        width: '12%'
+        alignItems: 'center',
+        paddingHorizontal: 20,
+        paddingVertical: 10
     },
     TxtAdc: {
-        fontSize: 30,
-        color: '#fff'
+        fontSize: 23,
+        color: '#FFF',
+        marginLeft: 5
     },
     body: {
         marginTop: '1%',
-        alignItems: 'center'
+        paddingHorizontal: '5%',
+    },
+    InfosSize: {
+        width: '9%',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     Names: {
-        borderWidth: 5,
-        borderColor: '#D9D9D9',
-        height: '45%',
-        width: '98%',
         flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-around'
+        justifyContent: 'space-between',
+        backgroundColor: '#EAEAEA',
+        paddingVertical: 15,
+        paddingHorizontal: 10,
     },
     TxtNames: {
-        fontSize: 30,
-        width: '14%',
-        textAlign: 'center',
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#333',
+        flex: 1,
+        textAlign: 'center'
     },
     itens: {
-        marginTop: '1%',
-        borderWidth: 5,
-        borderColor: '#D9D9D9',
-        height: '60%',
-        width: '98%',
         flexDirection: 'row',
+        justifyContent: 'space-between',
         alignItems: 'center',
-        justifyContent: 'space-around'
+        backgroundColor: '#FFF',
+        paddingVertical: 15,
+        paddingHorizontal: 10,
+        elevation: 2
+        
     },
     TxtItens: {
-        fontSize: 30,
-        width: '14%',
+        fontSize: 16,
+        color: '#333',
+        flex: 1,
         textAlign: 'center',
+        paddingHorizontal: 5,
+        overflow: 'hidden'
     },
     Icons: {
         flexDirection: 'row',
-        justifyContent:  'space-evenly',
-        width: '14%',
+        justifyContent: 'space-around',
+        width: '9%',
+        paddingHorizontal: 10,
     },
     ModalConteiner: {
         flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-        backgroundColor: "rgba(0, 0, 0, 0.5)",
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
     },
     ModalBody: {
-        width: "35%",
-        height: '60%',
+        width: '30%',
         padding: 20,
-        backgroundColor: "#fff",
-        alignItems: "center",
+        backgroundColor: '#FFF',
+        elevation: 5
     },
-    ModalBodyDel: {
-        width: "35%",
-        height: '60%',
-        padding: 20,
-        backgroundColor: "#fff",
-        alignItems: "center",
-        justifyContent: 'center',
-    },
-    TxtModalHeader:{
-        fontSize: 38
-    },
-    ModalInputBox: {
-        alignItems: 'center',
-        height: '85%',
-        width: '100%',
+    TxtModalHeader: {
+        fontSize: 22,
+        fontWeight: 'bold',
+        color: '#333',
+        marginBottom: 15
     },
     ModalInput: {
-        fontSize: 30,
-        margin: '2%',
-        color:'#636363',
-        height: '20%',
-        width: '90%',
-        borderWidth: 1,
-        borderColor: '#636363',
-        paddingLeft: '3%'
-    },
-    ModalTxtBox: {
-        alignItems: 'center'
-    },
-    ModalMessageBox: {
-        alignItems: 'center',
-        height: '85%',
-        width: '100%',
-        justifyContent: 'space-around',
-    },
-    ModalMessage: {
-        fontSize: 45
+        fontSize: 18,
+        color: '#333',
+        borderBottomWidth: 1,
+        borderColor: '#CCC',
+        marginBottom: 20,
+        paddingBottom: 5
     },
     ModalBtnsBox: {
-        width: '90%',
         flexDirection: 'row',
         justifyContent: 'space-around',
-        marginTop: '3%'
+        marginTop: 20
     },
     ModalBtnsV: {
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '160%',
-        width: '14%',
-        backgroundColor: '#00FF1E',
+        backgroundColor: '#28A745',
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        alignItems: 'center'
     },
     ModalBtnsX: {
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '160%',
-        width: '14%',
-        backgroundColor: '#FF0000'
+        backgroundColor: '#DC3545',
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        alignItems: 'center'
     },
-    ModalBtnsVDel: {
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '160%',
-        width: '20%',
-        backgroundColor: '#00FF1E',
-    },
-    ModalBtnsXDel: {
-        justifyContent: 'center',
-        alignItems: 'center',
-        height: '160%',
-        width: '20%',
-        backgroundColor: '#FF0000'
-    },
-    ModalBtnsTxtDel: {
-        color: '#fff',
-        fontSize: 26
-    },
-})
+});
