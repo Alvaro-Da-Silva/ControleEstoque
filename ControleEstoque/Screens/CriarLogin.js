@@ -102,13 +102,13 @@ const styles = StyleSheet.create({
     },
     BoxInputs: {
         alignItems: 'center',
-        height: '60%',
+        height: '65%',
         justifyContent: 'flex-start'
     },
     Inputs: {
         fontSize: 38,
         color:'#333',
-        height: '25%',
+        height: '28%',
         width: '85%',
         borderWidth: 1,
         borderColor: '#D9D9D9',
@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
     FooterBox: {
         justifyContent: 'center',
         alignItems: 'center',
-        height: '20%'
+        height: '12%'
     },
     FooterTxt: {
         color:'#858585',

@@ -11,19 +11,32 @@
         const [senha,SetSenha] = useState('')
 
         const Login = async () => {
-            try{
-                axios.post('http://127.0.0.1:5000/login', {login,senha},
-                  {headers: {"Content-Type": "application/json"}}
-                 )
-                SetSenha('')
-                SetLogin('')
-                navigation.navigate('Home')
-            } catch(error) {
-                alert('Dados de login invalido')
-                SetSenha('')
-                SetLogin('')
+            if (senha === '' || login === '') {
+                alert('Digite seus dados de login');
+                return;
             }
-        }
+        
+            try {
+                const response = await axios.post('http://127.0.0.1:5000/login', { login, senha });
+                
+                if (response.status === 200) {
+                    alert('Login realizado com sucesso');
+                    SetSenha('');
+                    SetLogin('');
+                    navigation.navigate('Home');
+                } 
+            } catch (error) {
+                if (error.response && error.response.status === 401) {
+                    alert('Dados de login incorretos');
+                } else {
+                    alert('Ocorreu um erro ao realizar o login. Tente novamente mais tarde.');
+                }
+                SetSenha('');
+                SetLogin('');
+            }
+        };
+        
+
 
         return(
             <LinearGradient colors={['#F2F2F2','#F24F13']} style={styles.conteinerGradient}>

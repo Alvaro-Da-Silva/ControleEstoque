@@ -19,8 +19,13 @@ export default function Home(){
     const [preco,SetPreco] = useState('')
     const [descricao,SetDescricao] = useState('')
     const [searchTerm, SetSearchTerm] = useState('')
+    const [filteredData, SetFilteredData] = useState(data)
 
-    const filteredData = data.filter(item => item.nome.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    const Pesquisar = () => {
+        const dataP = data.filter(item => item.nome.toLowerCase().includes(searchTerm.toLowerCase()));
+        SetFilteredData(dataP)
+    }
 
     const ModalPut = (produto) => {
         SetmodalViseblePUT(true);
@@ -96,6 +101,10 @@ export default function Home(){
         CarregarProdutos();
     }, []);
 
+    useEffect(() => {
+        SetFilteredData(data); 
+    }, [data]);
+
     return(
         <View style={styles.conteiner}>
             <View style={styles.Header}>
@@ -107,7 +116,7 @@ export default function Home(){
                       value={searchTerm}
                       onChangeText={SetSearchTerm}
                     />
-                    <TouchableOpacity style={styles.BtnSearch}>
+                    <TouchableOpacity style={styles.BtnSearch} onPress={Pesquisar}>
                         <Fontisto name="search" size={40} color="black" />
                     </TouchableOpacity>
                 </View>
