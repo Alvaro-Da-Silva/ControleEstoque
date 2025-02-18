@@ -130,14 +130,17 @@ def DeletarProduto(id):
 @app.route('/login', methods=['POST'])
 def Login():
     data = request.json
+    login = data.get('login')
+    senha = data.get('senha')
     conn = get_db_connection()
     CRS = conn.cursor()
 
-    CRS.execute('SELECT id, nome FROM usuarios WHERE login = %s AND senha = %s', (data['login'], data['senha']))
+    CRS.execute('SELECT id, nome FROM usuarios WHERE login = %s AND senha = %s', (login, senha))
     user = CRS.fetchone()
     conn.close()
 
     if user:
-        return make_response(jsonify(mensagem='Login realizado com sucesso'))
+        return make_response(jsonify(mensagen='Login realizado com sucesso'), 200)
     else:
-        return make_response(jsonify(mensagem='Senha ou login incorretos'))
+        return make_response(jsonify(mensagen='Dados de login incorretos '),401)
+
